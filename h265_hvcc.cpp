@@ -7,9 +7,63 @@
 #include <stdio.h>
 #include <math.h>
 
-#include "h265_avcc.h"
 #include "bs.h"
+#include "h265_hvcc.h"
 #include "h265_stream.h"
+
+hvcc_t* hvcc_new() {
+    hvcc_t* hvcc = (hvcc_t*)calloc(1, sizeof(hvcc_t));
+    return hvcc;
+
+}
+void hvcc_free(hvcc_t* avcc) {
+
+}
+
+int read_hvcc(hvcc_t* avcc, h265_stream_t* h, bs_t* b) {
+	return 0;
+}
+
+int write_hvcc(hvcc_t* avcc, h265_stream_t* h, bs_t* b) {
+	return 0;
+}
+
+int write_h265_hvcc(uint8_t* vps, int vps_size, uint8_t* sps, int sps_size, uint8_t* pps, int pps_size, bs_t* b) {
+	uint8_t pre[] = {0x01, 0x01, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x78, 0xf0, 0x00, 0xfc, 0xfd, 0xf8, 0xf8, 0x00, 0x00, 0x0f};
+	bs_write_bytes(b, pre, sizeof(pre));
+
+	int numOfArrays = 3;
+	bs_write_u8(b, numOfArrays);
+
+	bs_write_u(b, 1, 0x1);
+	bs_write_u(b, 1, 0x0);
+	bs_write_u(b, 6, 0x20);
+	bs_write_u(b, 16, 0x1);
+	bs_write_u(b, 16, vps_size);
+	bs_write_bytes(b, vps, vps_size);
+
+	bs_write_u(b, 1, 0x1);
+	bs_write_u(b, 1, 0x0);
+	bs_write_u(b, 6, 0x21);
+	bs_write_u(b, 16, 0x1);
+	bs_write_u(b, 16, sps_size);
+	bs_write_bytes(b, sps, sps_size);
+
+	bs_write_u(b, 1, 0x1);
+	bs_write_u(b, 1, 0x0);
+	bs_write_u(b, 6, 0x22);
+	bs_write_u(b, 16, 0x1);
+	bs_write_u(b, 16, pps_size);
+	bs_write_bytes(b, pps, pps_size);
+
+	if (bs_overrun(b)) { return -1; }
+	return bs_pos(b);
+}
+
+void debug_hvcc(hvcc_t* avcc) {
+
+}
+
 
 #if 0
 avcc_t* avcc_new()

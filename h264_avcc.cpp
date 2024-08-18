@@ -52,7 +52,7 @@ int read_avcc(avcc_t* avcc, h264_stream_t* h, bs_t* b)
     }
 
     avcc->numOfPictureParameterSets = bs_read_u(b, 8);
-    avcc->pps_table = (pps_t**)calloc(avcc->numOfSequenceParameterSets, sizeof(pps_t*));
+    
     for (int i = 0; i < avcc->numOfPictureParameterSets; i++)
     {
         int pictureParameterSetLength = bs_read_u(b, 16);
@@ -111,6 +111,36 @@ int write_avcc(avcc_t* avcc, h264_stream_t* h, bs_t* b)
         bs_write_u(b, 16, pictureParameterSetLength);
         bs_write_bytes(b, buf, len);
         free(buf);
+    }
+
+    if (bs_overrun(b)) { return -1; }
+    return bs_pos(b);
+}
+
+int write_h264_avcc(uint8_t* sps, int sps_size, uint8_t* pps, int pps_size, bs_t* b) {
+    bs_write_u8(b, 1); // configurationVersion = 1;
+    bs_write_u8(b, *(sps + 1));
+    bs_write_u8(b, *(sps + 2));
+    bs_write_u8(b, *(sps + 3));
+    bs_write_u(b, 6, 0x3F); // reserved = '111111'b;
+    bs_write_u(b, 2, 0x3);
+    bs_write_u(b, 3, 0x07); // reserved = '111'b;
+
+	int numOfSequenceParameterSets = 1;
+    bs_write_u(b, 5, numOfSequenceParameterSets);
+
+    for (int i = 0; i < numOfSequenceParameterSets; i++)
+    {
+        bs_write_u(b, 16, sps_size);
+        bs_write_bytes(b, sps, sps_size);
+    }
+
+	int numOfPictureParameterSets = 1;
+    bs_write_u(b, 8, numOfPictureParameterSets);
+    for (int i = 0; i < numOfPictureParameterSets; i++)
+    {
+        bs_write_u(b, 16, pps_size);
+        bs_write_bytes(b, pps, pps_size);
     }
 
     if (bs_overrun(b)) { return -1; }
